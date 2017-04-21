@@ -14,8 +14,8 @@ pygame.init()
 
 # Create a screen with a size
 screen = {
-    "height": 500,
-    "width": 800,
+    "height": 650,
+    "width": 1152,
 }
 
 keys = {
@@ -44,31 +44,36 @@ hero = {
     "x": 100,
     "y": 100,
     "speed": 10,
-    "saves": 0,
-    "height": 96,
+    "wins": 0,
+    "height": 126,
     "width": 99
 }
 
-damsel = {
+enemy = {
     "x": 200,
     "y": 200,
-    "speed": 10
+    "speed": 2,
+    "direction": "N"
 }
+
+directions = ['N','S','E','W','NE','NW','SE','SW']
 
 screen_size = (screen["width"], screen["height"])
 pygame_screen = pygame.display.set_mode(screen_size)
 pygame.display.set_caption("Goblin Chase")
-background_image = pygame.image.load('images/city.jpg')
-hero_image = pygame.image.load('images/ww.png')
+background_image = pygame.image.load('./images/ff7bg.jpg')
+hero_image = pygame.image.load('./images/cloud.png')
 hero_image_scaled = pygame.transform.scale(hero_image, (hero["width"],hero["height"]))
-damsel_image = pygame.image.load('images/sm.png')
-damsel_image_scaled = pygame.transform.scale(damsel_image, (99,136))
+enemy_image = pygame.image.load('./images/seph.png')
+enemy_image_scaled = pygame.transform.scale(enemy_image, (130,130))
 
 # Add music files
 pygame.mixer.music.load("sounds/music.wav")
 pygame.mixer.music.play(-1)
 win_sound = pygame.mixer.Sound('sounds/win.wav')
 lose_sound = pygame.mixer.Sound('sounds/lose.wav')
+
+tick = 0
 
 
 # /////////////////////////////////////////////////////
@@ -78,6 +83,7 @@ lose_sound = pygame.mixer.Sound('sounds/lose.wav')
 game_on = True
 # Create the game loop (while 1)
 while game_on:
+    tick += 1
     # We are inside the main game loop. It will run as long as game_on is True
     #  ---EVENTS!---
     for event in pygame.event.get():
@@ -136,31 +142,76 @@ while game_on:
         if hero['x'] < (screen['width'] - hero['width']):
             hero['x'] += hero['speed']
 
+    # # Update enemy position
+    # get random direction (up down left or right)
+    # move enemy in that direction
+    if (enemy['direction'] == 'N'):
+        enemy['y'] -= enemy['speed']
+    elif (enemy['direction'] == 'S'):
+        enemy['y'] += enemy['speed']
+    elif (enemy['direction'] == 'E'):
+        enemy['x'] += enemy['speed']
+    elif (enemy['direction'] == 'W'):
+        enemy['x'] -= enemy['speed']
+    elif (enemy['direction'] == 'NE'):
+        enemy['y'] -= enemy['speed']
+        enemy['x'] += enemy['speed']
+    elif (enemy['direction'] == 'NW'):
+        enemy['y'] -= enemy['speed']
+        enemy['x'] -= enemy['speed']
+    elif (enemy['direction'] == 'SE'):
+        enemy['y'] += enemy['speed']
+        enemy['x'] += enemy['speed']
+    elif (enemy['direction'] == 'SW'):
+        enemy['y'] += enemy['speed']
+        enemy['x'] -= enemy['speed']
 
-    # # Update Damsel position
+    if (tick % 60 == 0):
+        new_dir_index = randint(0,len(directions)-1)
+        enemy['direction'] = directions[new_dir_index]
+
+    if (enemy['x'] > screen['width']):
+        enemy['x'] = 0
+    elif (enemy['x'] < 0):
+        enemy['x'] = screen['width']
+    if (enemy['y'] > screen['height']):
+        enemy['y'] = 0
+    elif (enemy['y'] < 0):
+        enemy['y'] = screen['height']
+
     # if keys_down['w']:
-    #     damsel['y'] -= damsel['speed']
+    #     enemy['y'] -= enemy['speed']
     # elif keys_down['s']:
-    #     damsel['y'] += damsel['speed']
+    #     enemy['y'] += enemy['speed']
     # if keys_down['a']:
-    #     damsel['x'] -= damsel['speed']
+    #     enemy['x'] -= enemy['speed']
     # elif keys_down['d']:
-    #     damsel['x'] += damsel['speed']
+    #     enemy['x'] += enemy['speed']
 
 # COLLISION DETECTION
-    distance_between = fabs(hero['x'] - damsel['x']) + fabs(hero['y'] - damsel['y'])
+    distance_between = fabs(hero['x'] - enemy['x']) + fabs(hero['y'] - enemy['y'])
     if (distance_between < 50):
-    # the hero and damsel are touching!
+    # the hero and enemy are touching!
         # print ("Collision!")
         # Generate random x > 0, x < screen['width']
         # Generate random y > 0, y < screen['height']
         rand_x = randint(0, screen['width'] - 200)
         rand_y = randint(0, screen['height'] - 200)
-        damsel['x'] = rand_x
-        damsel['y'] = rand_y
+        enemy['x'] = rand_x
+        enemy['y'] = rand_y
         # Update hero's wins
-        hero['saves'] += 1
+        hero['wins'] += 1
         win_sound.play()
+
+    # MOVING SUPERMAN
+    # if enemy['x'] < hero['x']:
+    #     enemy['x'] += enemy['speed']
+    # elif enemy['x'] > hero['x']:
+    #     enemy['x'] -= enemy['speed']
+    # if enemy['y'] < hero['y']:
+    #     enemy['y'] += enemy['speed']
+    # elif enemy['y'] > hero['y']:
+    #     enemy['y'] -= enemy['speed']
 
     # ---RENDER!---
     # blit takes 2 arguments: (1) what? (2) where?
@@ -169,12 +220,12 @@ while game_on:
 
     # Draw the hero wins on the screen
     font = pygame.font.Font(None, 25)
-    saves_text = font.render("Saves: %d" % (hero['saves']), True, (255,255,255))
-    pygame_screen.blit(saves_text, [40,40])
+    wins_text = font.render("Wins: %d" % (hero['wins']), True, (255,255,255))
+    pygame_screen.blit(wins_text, [40,40])
 
     # draw the hero
     pygame_screen.blit(hero_image_scaled, [hero['x'],hero['y']])
-    pygame_screen.blit(damsel_image_scaled, [damsel['x'],damsel['y']])
+    pygame_screen.blit(enemy_image_scaled, [enemy['x'],enemy['y']])
 
     # clear the screen for next time
     pygame.display.flip()
